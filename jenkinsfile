@@ -1,27 +1,38 @@
 pipeline {
     agent any
+
     tools {
-        jdk 'JDK21'
+        maven 'mymaven'
     }
+
     stages {
+
         stage('Checkout code') {
             steps {
-                git branch: 'main', url: 'https://github.com/Jamina-ENSI/Hello_example.git'
+                git branch: 'master', url: 'https://github.com/oumaymariahi/countryservice.git'
             }
         }
+
         stage('Compile code') {
             steps {
-                sh 'javac Test.java'
+                sh 'mvn compile'
             }
         }
-        stage('Execute code') {
+
+        stage('Test code') {
             steps {
-                sh 'java Test'
+                sh 'mvn test'
+            }
+            post {
+                success {
+                    junit allowEmptyResults: true, testResults: '**/target/surfire-reports/*.xml'
+                }
             }
         }
-        stage('display message') {
+
+        stage('Package code') {
             steps {
-                echo 'Hello from github'
+                sh 'mvn package'
             }
         }
     }
