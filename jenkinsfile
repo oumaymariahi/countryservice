@@ -1,38 +1,29 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'mymaven'
-    }
-
     stages {
-
-        stage('Checkout code') {
+        stage('Clone repository') {
             steps {
-                git branch: 'master', url: 'https://github.com/oumaymariahi/countryservice.git'
+                git 'https://github.com/oumaymariahi/countryservice.git'
+
             }
         }
 
-        stage('Compile code') {
+        stage('Build Docker Image') {
             steps {
-                sh 'mvn compile'
-            }
-        }
-
-        stage('Test code') {
-            steps {
-                sh 'mvn test'
-            }
-            post {
-                success {
-                    junit allowEmptyResults: true, testResults: '**/target/surfire-reports/*.xml'
+                script {
+                    dockerImage = docker.build("oumaymariahi/countryservice:v2")
                 }
             }
         }
 
-        stage('Package code') {
+        stage('Push to Docker Hub') {
             steps {
-                sh 'mvn package'
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
+                        dockerImage.push()
+                    }
+                }
             }
         }
     }
