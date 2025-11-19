@@ -20,6 +20,6 @@ public class Country {
 	@Column(name="name_country")
 	private String name;
 	@Column(name="capital_name")
-	private String Capital;
+	private String capital;
 
 }
