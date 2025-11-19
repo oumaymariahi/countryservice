@@ -1,26 +1,26 @@
 version: '3.8'
+
 services:
   mysql:
     image: mysql:8.0
     container_name: mysql-db
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: countrydb
+      MYSQL_ROOT_PASSWORD: MySQL
+      MYSQL_DATABASE: countries
     ports:
       - "3307:3306"
-
     volumes:
       - mysql_data:/var/lib/mysql
 
   countryservice:
-    image: countryservice:v1
+    image: oumaymariahi/countryservice:v2
     container_name: countryservice
     ports:
-      - "8080:8080"
+      - "8082:8082"
     depends_on:
       - mysql
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/countrydb
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/countries
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
 
