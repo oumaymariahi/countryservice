@@ -4,10 +4,10 @@
   connection: local
 
   vars:
-    image_name: oumaymariahi/countryservice
-    image_tag: v1
-    dockerfile_path: ./Dockerfile
-	kubeconfig_path: "{{ lookup('env','KUBECONFIG') }}"
+    image_name: "oumaymariahi/countryservice"
+    image_tag: "v1"
+    dockerfile_path: "./Dockerfile"
+    kubeconfig_path: "{{ lookup('env','KUBECONFIG') }}"
     docker_registry_username: "oumaymariahi"
     docker_registry_password: "oumay2708"
 
@@ -38,13 +38,13 @@
     - name: Apply Kubernetes Deployment
       kubernetes.core.k8s:
         state: present
-		namespace : jenkins
-        src: deployment.yaml
-        kubeconfig: config
+        namespace: jenkins
+        src: "./deployment.yaml"
+        kubeconfig: "{{ kubeconfig_path }}"
 
     - name: Apply Kubernetes Service
       kubernetes.core.k8s:
         state: present
-		namespace : jenkins
-        src: service.yaml
-        kubeconfig: config
+        namespace: jenkins
+        src: "./service.yaml"
+        kubeconfig: "{{ kubeconfig_path }}"
