@@ -41,6 +41,15 @@ pipeline {
 		        }
 		    }
 		}
+		 stage('Deploy with Ansible') {
+            steps {
+                ansiblePlaybook(
+                    playbook: 'playbookCICD.yml',
+                    inventory: 'localhost,',
+                    extras: "-e dockerhub_pwd=${dockerhub_pwd}"
+                )
+            }
+        }
 			
     }
 }
