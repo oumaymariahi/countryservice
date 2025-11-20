@@ -47,15 +47,16 @@ pipeline {
         }
 
         stage('Deploy using Ansible playbook') {
-            steps {
-                withCredentials([file(credentialsId: 'kubeconfig-file', variable: 'KCFG')]) {
-                    sh """
-                        ansible-playbook -i localhost, \
-                          -e kubeconfig_path=${KCFG} \
-                          playbookCICD.yml
-                    """
-                }
-            }
-        }
+		    steps {
+		        withCredentials([file(credentialsId: 'kubeconfig-file', variable: 'KCFG')]) {
+		            ansiblePlaybook(
+		                playbook: 'playbookCICD.yml',
+		                inventory: 'localhost,',
+		                extras: "-e kubeconfig_path=$KCFG"
+		            )
+		        }
+		    }
+		}
+
     }
 }
