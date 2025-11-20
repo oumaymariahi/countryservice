@@ -31,12 +31,16 @@ pipeline {
                 }
             }
         }
-        stage('Deploy') {
-    steps {
-        sh 'docker-compose down'
-        sh 'docker-compose pull'
-        sh 'docker-compose up -d'
-    }
-}
+		stage('Deploy to Kubernetes') {
+		    steps {
+		        script {
+		            kubeconfig(credentialsId: 'kubernetes-pwd', serverUrl: '') {
+		                sh 'kubectl apply -f deployment.yaml'
+		                sh 'kubectl apply -f service.yaml'
+		            }
+		        }
+		    }
+		}
+			
     }
 }
