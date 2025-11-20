@@ -33,27 +33,35 @@ pipeline {
 		        }
 		    }
 		}
-
-		stage('Deploy to Kubernetes') {
+		
+		stage('Set Kubeconfig') {
 		    steps {
-		        script {
-		            kubeconfig(credentialsId: 'kubeconfig-file', serverUrl: '') {
-		                sh 'kubectl apply -f deployment.yaml'
-		                sh 'kubectl apply -f service.yaml'
-		            }
+		        withCredentials([file(credentialsId: 'kubeconfig-file', variable: 'KCFG')]) {
+		            sh 'export KUBECONFIG=$KCFG'
 		        }
 		    }
 		}
-		stage('Deploy using Ansible playbook') {
+
+
+		stage('Deploy to Kubernetes') {
 		    steps {
-		        script {
-		            ansiblePlaybook(
-			            playbook: 'playbookCICD.yml',
-			            inventory: 'localhost,'
-			        )
+		        kubeconfig(credentialsId: 'kubeconfig-file', serverUrl: '') {
+		            sh 'kubectl apply -f deployment.yaml'
+		            sh 'kubectl apply -f service.yaml'
 		        }
 		    }
-}
+		}
+
+		stage('Deploy using Ansible playbook') {
+		    steps {
+		        ansiblePlaybook(
+		            playbook: 'playbookCICD.yml',
+		            inventory: 'localhost,',
+		            extras: "--extra-vars \"kubeconfig_path=$KUBECONFIG\""
+		        )
+		    }
+		}
+
 
 			
     }
