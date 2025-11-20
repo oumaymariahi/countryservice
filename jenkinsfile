@@ -6,11 +6,10 @@ pipeline {
     }
 
     stages {
+
         stage('Build with Maven') {
             steps {
-                sh '''
-                    mvn clean package -DskipTests
-                '''
+                sh 'mvn clean package -DskipTests'
             }
         }
 
@@ -23,50 +22,40 @@ pipeline {
         }
 
         stage('Push to Docker Hub') {
-		    steps {
-		        script {
-		            retry(3) {
-		                docker.withRegistry('https://index.docker.io/v1/', '74ac32e9-9f43-4cc6-a3a9-2bf40dfed8ec') {
-		                    dockerImage.push()
-		                }
-		            }
-		        }
-		    }
-		}
-		
-		stage('Set Kubeconfig') {
-		    steps {
-		        withCredentials([file(credentialsId: 'kubeconfig-file', variable: 'KCFG')]) {
-		            sh 'export KUBECONFIG=$KCFG'
-		        }
-		    }
-		}
+            steps {
+                script {
+                    retry(3) {
+                        docker.withRegistry('https://index.docker.io/v1/', '74ac32e9-9f43-4cc6-a3a9-2bf40dfed8ec') {
+                            dockerImage.push()
+                        }
+                    }
+                }
+            }
+        }
 
+        stage('Deploy to Kubernetes') {
+            steps {
+                kubeconfig(
+                    credentialsId: 'kubeconfig-file',
+                    serverUrl: 'https://kubernetes.default.svc',
+                    caCertificate: ''
+                ) {
+                    sh 'kubectl apply -f deployment.yaml'
+                    sh 'kubectl apply -f service.yaml'
+                }
+            }
+        }
 
-		stage('Deploy to Kubernetes') {
-		    steps {
-		        kubeconfig(
-				    credentialsId: 'kubeconfig-file',
-				    serverUrl: 'https://kubernetes.default.svc',
-				    caCertificate: ''
-				) {
-		            sh 'kubectl apply -f deployment.yaml'
-		            sh 'kubectl apply -f service.yaml'
-		        }
-		    }
-		}
-
-		stage('Deploy using Ansible playbook') {
-		    steps {
-		        ansiblePlaybook(
-		            playbook: 'playbookCICD.yml',
-		            inventory: 'localhost,',
-		            extras: "--extra-vars \"kubeconfig_path=$KUBECONFIG\""
-		        )
-		    }
-		}
-
-
-			
+        stage('Deploy using Ansible playbook') {
+            steps {
+                withCredentials([file(credentialsId: 'kubeconfig-file', variable: 'KCFG')]) {
+                    sh """
+                        ansible-playbook -i localhost, \
+                          -e kubeconfig_path=${KCFG} \
+                          playbookCICD.yml
+                    """
+                }
+            }
+        }
     }
 }
