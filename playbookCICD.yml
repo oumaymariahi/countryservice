@@ -7,7 +7,7 @@
     image_name: oumaymariahi/countryservice
     image_tag: v1
     dockerfile_path: ./Dockerfile
-    kubeconfig_path: "C:\Users\worde\.kube\config"
+	kubeconfig_path: "{{ lookup('env','KUBECONFIG') }}"
     docker_registry_username: "oumaymariahi"
     docker_registry_password: "oumay2708"
 
