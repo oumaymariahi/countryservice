@@ -1,0 +1,50 @@
+---
+- name: Build and Deploy Docker Image to Kubernetes
+  hosts: localhost
+  connection: local
+
+  vars:
+    image_name: oumaymariahi/countryservice
+    image_tag: v1
+    dockerfile_path: ./Dockerfile
+    kubeconfig_path: "C:\Users\worde\.kube\config"
+    docker_registry_username: "oumaymariahi"
+    docker_registry_password: "oumay2708"
+
+  tasks:
+
+    - name: Login to Docker Hub
+      community.docker.docker_login:
+        username: "{{ docker_registry_username }}"
+        password: "{{ docker_registry_password }}"
+        reauthorize: true
+
+    - name: Build Docker Image
+      community.docker.docker_image:
+        build:
+          path: "{{ dockerfile_path }}"
+        name: "{{ image_name }}"
+        tag: "{{ image_tag }}"
+        source: build
+        state: present
+
+    - name: Push Docker Image
+      community.docker.docker_image:
+        name: "{{ image_name }}"
+        tag: "{{ image_tag }}"
+        push: true
+        source: local
+
+    - name: Apply Kubernetes Deployment
+      kubernetes.core.k8s:
+        state: present
+		namespace : jenkins
+        src: deployment.yaml
+        kubeconfig: config
+
+    - name: Apply Kubernetes Service
+      kubernetes.core.k8s:
+        state: present
+		namespace : jenkins
+        src: service.yaml
+        kubeconfig: config
