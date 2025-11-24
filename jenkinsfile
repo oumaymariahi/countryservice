@@ -5,18 +5,40 @@ pipeline {
         maven 'Maven'
     }
 
+    environment {
+        IMAGE_NAME = "oumaymariahi/countryservice"
+        IMAGE_TAG  = "v2"
+    }
+
     stages {
+
+        stage('Checkout SCM') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Run Unit Tests') {
+            steps {
+                sh 'mvn clean test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                }
+            }
+        }
 
         stage('Build with Maven') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                sh 'mvn clean package'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    dockerImage = docker.build("oumaymariahi/countryservice:v2")
+                    dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
                 }
             }
         }
@@ -33,30 +55,17 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Deploy using Ansible playbook') {
             steps {
-                kubeconfig(
-                    credentialsId: 'kubeconfig-file',
-                    serverUrl: 'https://kubernetes.default.svc',
-                    caCertificate: ''
-                ) {
-                    sh 'kubectl apply -f deployment.yaml'
-                    sh 'kubectl apply -f service.yaml'
+                withCredentials([file(credentialsId: 'kubeconfig-file', variable: 'KCFG')]) {
+                    ansiblePlaybook(
+                        playbook: 'playbookCICD.yml',
+                        inventory: 'localhost,',
+                        extras: "-e kubeconfig_path=${KCFG} -e image_tag=${IMAGE_TAG}"
+                    )
                 }
             }
         }
-
-        stage('Deploy using Ansible playbook') {
-		    steps {
-		        withCredentials([file(credentialsId: 'kubeconfig-file', variable: 'KCFG')]) {
-		            ansiblePlaybook(
-		                playbook: 'playbookCICD.yml',
-		                inventory: 'localhost,',
-		                extras: "-e kubeconfig_path=$KCFG"
-		            )
-		        }
-		    }
-		}
 
     }
 }
