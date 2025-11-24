@@ -5,6 +5,7 @@
 
   vars:
     kubeconfig_path: "{{ kubeconfig_path }}"
+    image_tag: "{{ image_tag | default('v2') }}"
 
   tasks:
 
